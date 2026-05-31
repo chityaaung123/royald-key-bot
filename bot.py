@@ -3,18 +3,23 @@ import time
 import logging
 import requests
 import asyncio
+from threading import Thread
 from flask import Flask
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-# Flask Web Server အပိုင်း
+# 1. Flask Web Server အပိုင်း (Render Port Scan မတက်အောင်)
 app = Flask(__name__)
 
 @app.route("/")
 def home():
     return "Royald Bot Is Fully Active 24/7!"
 
-# Telegram Bot အပိုင်း
+def run_flask():
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
+
+# 2. Telegram Bot အပိုင်း (မင်းရဲ့ Token အစစ်ကြီး ထည့်ထားပါတယ်)
 BOT_TOKEN = "8952360592:AAG8r9HB4Glihm6h35n4lgNahoxt9GA0L0I"
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -67,28 +72,19 @@ async def bypass_link(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         logging.error(f"Bypass Error: {e}")
         await status_msg.edit_text("❌ API Server ဘက်က တုံ့ပြန်မှု အရမ်းကြာနေလို့ပါဗျာ။ နောက်တစ်ကြိမ် ပြန်ပို့ကြည့်ပေးပါဦး။")
 
-async def run_bot():
-    # Application ကို တိုက်ရိုက် ဆောက်မယ်
+def main():
+    # Flask Web Server ကို နောက်ကွယ်က Thread နဲ့ အရင်ဆုံး Run ထားမယ်
+    flask_thread = Thread(target=run_flask)
+    flask_thread.daemon = True
+    flask_thread.start()
+
+    # Telegram Bot ကို ပုံမှန်အတိုင်း သီးသန့် အပြည့်အဝ ဆောက်ပြီး ပွင့်စေမယ်
     tg_app = Application.builder().token(BOT_TOKEN).build()
     tg_app.add_handler(CommandHandler("start", start))
     tg_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bypass_link))
     
-    # Python 3.14 နဲ့ ငြိနေတဲ့ run_polling() အစား အခြေခံကျကျ စနစ်နဲ့ ပွင့်စေတာပါ
-    await tg_app.initialize()
-    await tg_app.updater.start_polling()
-    await tg_app.start()
-    print("🤖 Telegram Bot Started Successfully!")
-    
-    # Flask Server ကို တွဲလျက် Run ပေးထားမယ်
-    port = int(os.environ.get("PORT", 5000))
-    from werkzeug.serving import make_server
-    server = make_server('0.0.0.0', port, app)
-    
-    # Bot ရော Flask ရော မပိတ်ဘဲ ၂၄ နာရီပတ်လုံး ပွင့်နေစေမယ့် Loop
-    while True:
-        server.handle_request()
-        await asyncio.sleep(0.1)
+    print("🤖 Bot is starting via Polling...")
+    tg_app.run_polling(drop_pending_updates=True)
 
 if __name__ == '__main__':
-    # စနစ်သစ်အရ ကွင်းဆက်တစ်ခုလုံးကို ခေါ်ယူပွင့်စေတာပါ
-    asyncio.run(run_bot())
+    main()
