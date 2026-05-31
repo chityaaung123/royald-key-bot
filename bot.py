@@ -8,7 +8,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 app = Flask(__name__)
 
 # မင်းရဲ့ Telegram Bot Token ကို ဒီမှာ ထည့်ပေးပါဦး
-BOT_TOKEN = os.getenv("8952360592:AAG8r9HB4Glihm6h35n4lgNahoxt9GA0L0I")
+BOT_TOKEN = "8952360592:AAG8r9HB4Glihm6h35n4lgNahoxt9GA0L0I"
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 tg_app = Application.builder().token(BOT_TOKEN).build()
