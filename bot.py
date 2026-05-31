@@ -11,12 +11,14 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 app = Flask(__name__)
 
 BOT_TOKEN = "8952360592:AAG8r9HB4Glihm6h35n4lgNahoxt9GA0L0I"
-RENDER_URL = "https://royald-key-bot.onrender.com"  # မင်းရဲ့ Render Domain Link
+# မင်းရဲ့ တကယ့် Render ဒိုမိန်းအမှန်ကို ကွက်တိ ပြင်ပေးထားပါတယ်ဗျာ
+RENDER_URL = "https://royald-hub-premium-bypasser.onrender.com"  
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-# Global Application variables
+# Global Application & Loop variables
 tg_app = None
+main_loop = None
 
 @app.route("/", methods=["GET"])
 def home():
@@ -25,10 +27,14 @@ def home():
 # Telegram ကနေ သတင်းအချက်အလက် လှမ်းပို့မယ့် Webhook Route
 @app.route(f"/{BOT_TOKEN}", methods=["POST"])
 def webhook():
-    if tg_app:
-        update = Update.de_json(request.get_json(force=True), tg_app.bot)
-        # Background မှာ Update ကို ပတ်စေမယ်
-        asyncio.run_coroutine_threadsafe(tg_app.process_update(update), loop)
+    if tg_app and main_loop:
+        try:
+            json_string = request.get_json(force=True)
+            update = Update.de_json(json_string, tg_app.bot)
+            # Async Loop ထဲမှာ ပုံမှန်အတိုင်း အလုပ်လုပ်ခိုင်းမယ်
+            asyncio.run_coroutine_threadsafe(tg_app.process_update(update), main_loop)
+        except Exception as e:
+            logging.error(f"Webhook Update Error: {e}")
     return "OK", 200
 
 # /start နှုတ်ဆက်စာသား
@@ -87,24 +93,24 @@ async def init_webhook_bot():
     tg_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bypass_link))
     
     await tg_app.initialize()
-    # Webhook Link ကို Telegram Server ဆီ ချိတ်ဆက်သတ်မှတ်လိုက်မယ်
+    # Webhook လမ်းကြောင်းကို ဒိုမိန်းအမှန်ကြီးနဲ့ တိုက်ရိုက်ချိတ်လိုက်ပါပြီ
     await tg_app.bot.set_webhook(url=f"{RENDER_URL}/{BOT_TOKEN}")
     await tg_app.start()
     print("🤖 Webhook Bot Configured & Connected Successfully!")
 
 if __name__ == '__main__':
-    # Background Async Loop တစ်ခု ဆောက်မယ်
-    loop = asyncio.new_event_loop()
+    # ပင်မ Async Loop ကို အသေသတ်မှတ်မယ်
+    main_loop = asyncio.new_event_loop()
     from threading import Thread
     def start_loop(loop):
         asyncio.set_event_loop(loop)
         loop.run_until_complete(init_webhook_bot())
         loop.run_forever()
         
-    t = Thread(target=start_loop, args=(loop,))
+    t = Thread(target=start_loop, args=(main_loop,))
     t.daemon = True
     t.start()
     
-    # Flask Web Server ကို ပင်မ Thread မှာ ပွင့်စေမယ် (Render Port ချိတ်ဆက်ဖို့)
+    # Flask Web Server ကို ပင်မ Thread မှာ ပွင့်စေမယ်
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
