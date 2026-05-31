@@ -15,7 +15,7 @@ def home():
     return "Royald Bot Is Fully Active 24/7!"
 
 # Telegram Bot အပိုင်း
-BOT_TOKEN = "8152360592:AAG8n9Hb4G1ihm6h35n4lNahokt9GAOLOI"
+BOT_TOKEN = "8952360592:AAG8r9HB4Glihm6h35n4lgNahoxt9GA0L0I"
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 # /start နှုတ်ဆက်စာသား
