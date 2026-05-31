@@ -9,7 +9,8 @@ from flask import Flask
 app = Flask(__name__)
 
 # မင်းရဲ့ Telegram Bot Token
-BOT_TOKEN = "8152360592:AAG8n9Hb4G1ihm6h35n4lNahokt9GAOLOI"
+# Render ရဲ့ Environment Variables ထဲကနေ Token ကို လှမ်းဖတ်ခိုင်းတာပါ
+BOT_TOKEN = os.environ.get(8952360592:AAG8r9HB4Glihm6h35n4lgNahoxt9GA0L0I)
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
