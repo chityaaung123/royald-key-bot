@@ -2,24 +2,15 @@ import os
 import time
 import logging
 import requests
-from threading import Thread
 import asyncio
-from flask import Flask, request
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
-
-app = Flask(__name__)
 
 # မင်းရဲ့ Telegram Bot Token
 BOT_TOKEN = "8952360592:AAG8r9HB4Glihm6h35n4lgNahoxt9GA0L0I"
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-loop = asyncio.new_event_loop()
-asyncio.set_event_loop(loop)
-tg_app = Application.builder().token(BOT_TOKEN).build()
-
-# /start လို့ နှိပ်ရင် ပေါ်လာမယ့် စတိုင်ကျကျ နှုတ်ဆက်စာသား
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     welcome_text = (
         "🤖 **Welcome to Royald Hub Premium Bypasser!**\n\n"
@@ -69,24 +60,15 @@ async def bypass_link(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         logging.error(f"Bypass Error: {e}")
         await status_msg.edit_text("❌ API Server ဘက်က တုံ့ပြန်မှု အရမ်းကြာနေလို့ပါဗျာ။ နောက်တစ်ကြိမ် ပြန်ပို့ကြည့်ပေးပါဦး။")
 
-tg_app.add_handler(CommandHandler("start", start))
-tg_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bypass_link))
-
-def run_tg_bot():
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(tg_app.initialize())
-    loop.run_until_complete(tg_app.updater.start_polling())
-    loop.run_until_complete(tg_app.start())
-    loop.run_forever()
-
-@app.route("/", methods=["GET", "POST"])
-def home():
-    return "Royald Premium Key Bot Is Running 24/7!"
+def main():
+    # Telegram Application ကို ရိုးရိုးရှင်းရှင်း တိုက်ရိုက်ဆောက်ပြီး Polling စနစ်နဲ့ Run ခြင်း
+    tg_app = Application.builder().token(BOT_TOKEN).build()
+    
+    tg_app.add_handler(CommandHandler("start", start))
+    tg_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bypass_link))
+    
+    print("🤖 Bot is starting via Polling...")
+    tg_app.run_polling()
 
 if __name__ == '__main__':
-    bot_thread = Thread(target=run_tg_bot)
-    bot_thread.daemon = True
-    bot_thread.start()
-    
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    main()
