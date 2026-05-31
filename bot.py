@@ -8,7 +8,7 @@ from flask import Flask
 
 app = Flask(__name__)
 
-# မင်းရဲ့ Telegram Bot Token အသစ်ကို ကွက်တိထည့်ထားပါတယ်
+# မင်းရဲ့ Telegram Bot Token အသစ်
 BOT_TOKEN = "8999847261:AAELT3RyDv5mw5R_LWNfGTUyT05WMTRDYts"
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -16,11 +16,11 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-# /start လို့ နှိပ်ရင် ပေါ်လာမယ့် စတိုင်ကျကျ နှုတ်ဆက်စာသား
+# /start နှုတ်ဆက်စာသား (ဒါက API သေနေလည်း ချက်ချင်း စာပြန်လာပါလိမ့်မယ်)
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     welcome_text = (
         "🤖 **Welcome to Royald Hub Premium Bypasser!**\n\n"
-        "👋 မင်္ဂလာပါဗျာ! ကျွန်တော့်ကို Lလရောက်သုံးစွဲပေးလို့ ကျေးဇူးအထူးတင်ပါတယ်ခင်ဗျာ။\n\n"
+        "👋 မင်္ဂလာပါဗျာ! ကျွန်တော့်ကို လာရောက်သုံးစွဲပေးလို့ ကျေးဇူးအထူးတင်ပါတယ်ခင်ဗျာ။\n\n"
         "✨ **ထောက်ပံ့ထားသော Link များ -**\n"
         "➡️ Platoboost (Platorelay)\n"
         "➡️ Delta Key / Fluxus / Hydrogen\n"
@@ -30,7 +30,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
     await update.message.reply_text(welcome_text, parse_mode='Markdown')
 
-# API ကနေ Link ကျော်ပေးမယ့် Function အစစ်
+# Multi-API စနစ်ဖြင့် Link ကျော်ပေးမည့် Function
 async def bypass_link(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_link = update.message.text
     if "http" not in user_link:
@@ -40,36 +40,51 @@ async def bypass_link(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     status_msg = await update.message.reply_text("⏳ Premium Web Server ကနေ မင်းရဲ့ Key ကို ကျော်ပေးနေပါပြီ... ခဏစောင့်ပေးပါဗျာ...")
     start_time = time.time()
     
-    # Premium Bypass API URL
-    api_url = f"https://api.freebypasser.xyz/api/bypass?url={user_link}"
+    # စမ်းသပ်မည့် API လိပ်စာ ပုံစံ ၃ ခု (အရန်စနစ် ပါဝင်သည်)
+    apis = [
+        f"https://api.freebypasser.xyz/api/bypass?url={user_link}",
+        f"https://dl.freebypasser.xyz/api/bypass?url={user_link}",
+        f"https://ethon.pylex.xyz/api/bypass?url={user_link}"
+    ]
     
-    try:
-        # Timeout ကို 50 အထိ တိုးပေးထားပါတယ် (API ကြာရင် တုံ့ပြန်နိုင်အောင်)
-        response = requests.get(api_url, timeout=50)
-        data = response.json()
-        
-        time_taken = round(time.time() - start_time, 2)
-        success = data.get("success", False)
-        key_result = data.get("result") or data.get("key") or data.get("bypassed")
-        link_type = data.get("type", "Bypass")
+    success = False
+    key_result = None
+    link_type = "Bypass"
+    
+    # API တစ်ခု သေနေရင် နောက်တစ်ခုကို အလိုအလျောက် ပြောင်းစမ်းမည့် Loop စနစ်
+    for api_url in apis:
+        try:
+            # Timeout ကို ၁၅ စက္ကန့်ပဲ ပေးထားလို့ Bot ကြီး ဟန်းမသွားတော့ပါဘူး
+            response = requests.get(api_url, timeout=15)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("success", False) or "result" in data or "key" in data:
+                    success = True
+                    key_result = data.get("result") or data.get("key") or data.get("bypassed")
+                    link_type = data.get("type", "Premium")
+                    break # အောင်မြင်သွားရင် Loop ထဲက ထွက်မယ်
+        except Exception as e:
+            logging.error(f"API Error ({api_url}): {e}")
+            continue # ဒီ API သေနေရင် နောက်တစ်ခုကို ဆက်စမ်းမယ်
 
-        if success and key_result:
-            response_text = (
-                f"🌟 **Bypass Success [{link_type}]**\n"
-                f"🟢 Time taken {time_taken}s\n\n"
-                f"**Result:**\n"
-                f"`{key_result}`"
-            )
-            await status_msg.edit_text(response_text, parse_mode='Markdown')
-        else:
-            await status_msg.edit_text("❌ စိတ်မကောင်းပါဘူးဗျာ၊ ဒီ Link က သက်တမ်းကုန်ဆုံးနေတာ (သို့မဟုတ်) ကျော်လို့ မရနိုင်တဲ့ Link ဖြစ်နေပါတယ်!")
-            
-    except Exception as e:
-        logging.error(f"Bypass Error: {e}")
-        await status_msg.edit_text("❌ API Server ဘက်က တုံ့ပြန်မှု အရမ်းကြာနေလို့ပါဗျာ။ နောက်တစ်ကြိမ် ပြန်ပို့ကြည့်ပေးပါဦး။")
+    time_taken = round(time.time() - start_time, 2)
+
+    if success and key_result:
+        response_text = (
+            f"🌟 **Bypass Success [{link_type}]**\n"
+            f"🟢 Time taken {time_taken}s\n\n"
+            f"**Result:**\n"
+            f"`{key_result}`"
+        )
+        await status_msg.edit_text(response_text, parse_mode='Markdown')
+    else:
+        # API တွေအကုန်လုံး Down နေချိန်မှာ ပြမယ့်စာသား
+        await status_msg.edit_text(
+            "❌ စိတ်မကောင်းပါဘူးဗျာ၊ လက်ရှိမှာ အဓိက Bypass API Server ကြီးတွေအကုန်လုံး Down (သေ) နေလို့ပါဗျာ!\n\n"
+            "Server ပြန်တက်လာရင် အလိုအလျောက် ပြန်ရပါလိမ့်မယ်။ ခဏနေမှ ထပ်စမ်းကြည့်ပေးပါဦး။"
+        )
 
 def run_tg_bot():
-    # Python 3.14 နဲ့ ငြိတတ်တဲ့ run_polling စနစ်ဟောင်းနေရာမှာ စိတ်ချရတဲ့ Loop စနစ်နဲ့ ပြောင်းထားပါတယ်
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     
@@ -77,7 +92,6 @@ def run_tg_bot():
     tg_app.add_handler(CommandHandler("start", start))
     tg_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bypass_link))
     
-    # Telegram ရဲ့ အမှားအဟောင်းတွေကို ရှင်းထုတ်ပြီး စက်နှိုးမယ်
     loop.run_until_complete(tg_app.initialize())
     loop.run_until_complete(tg_app.updater.start_polling(drop_pending_updates=True))
     loop.run_until_complete(tg_app.start())
@@ -89,11 +103,9 @@ def home():
     return "Royald Premium Key Bot Is Running 24/7!"
 
 if __name__ == '__main__':
-    # Bot ကို Background Thread အဖြစ် ခွဲမောင်းမယ်
     bot_thread = Thread(target=run_tg_bot)
     bot_thread.daemon = True
     bot_thread.start()
     
-    # Flask Web Server ကို ပင်မ Thread မှာ မောင်းမယ် (Render Port scan အောင်မြင်အောင်)
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
