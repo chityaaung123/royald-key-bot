@@ -11,8 +11,8 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 app = Flask(__name__)
 
 BOT_TOKEN = "8952360592:AAG8r9HB4Glihm6h35n4lgNahoxt9GA0L0I"
-# မင်းရဲ့ တကယ့် Render ဒိုမိန်းအမှန်ကို ကွက်တိ ပြင်ပေးထားပါတယ်ဗျာ
-RENDER_URL = "https://royald-hub-premium-bypasser.onrender.com"  
+# မင်းရဲ့ တကယ့် Render ဒိုမိန်းအစစ်ကို ကွက်တိ ပြင်ပေးလိုက်ပါပြီ!
+RENDER_URL = "https://royald-key-bot.onrender.com"  
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
