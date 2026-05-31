@@ -2,23 +2,26 @@ import os
 import time
 import logging
 import requests
-from threading import Thread
 import asyncio
+from threading import Thread
 from flask import Flask
-
-app = Flask(__name__)
-
-# မင်းရဲ့ Telegram Bot Token
-BOT_TOKEN = "8952360592:AAG8r9HB4Glihm6h35n4lgNahoxt9GA0L0I"
-
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-loop = asyncio.new_event_loop()
-asyncio.set_event_loop(loop)
-tg_app = Application.builder().token(BOT_TOKEN).build()
+# Flask Web Server အပိုင်း
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Royald Bot Is Fully Active 24/7!"
+
+def run_flask():
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
+
+# Telegram Bot အပိုင်း
+BOT_TOKEN = "8152360592:AAG8n9Hb4G1ihm6h35n4lNahokt9GAOLOI"
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 # /start နှုတ်ဆက်စာသား
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -43,7 +46,6 @@ async def bypass_link(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
     status_msg = await update.message.reply_text("⏳ Premium Web Server ကနေ မင်းရဲ့ Key ကို ကျော်ပေးနေပါပြီ... ခဏစောင့်ပေးပါဗျာ...")
     start_time = time.time()
-    
     api_url = f"https://api.freebypasser.xyz/api/bypass?url={user_link}"
     
     try:
@@ -70,22 +72,19 @@ async def bypass_link(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         logging.error(f"Bypass Error: {e}")
         await status_msg.edit_text("❌ API Server ဘက်က တုံ့ပြန်မှု အရမ်းကြာနေလို့ပါဗျာ။ နောက်တစ်ကြိမ် ပြန်ပို့ကြည့်ပေးပါဦး။")
 
-tg_app.add_handler(CommandHandler("start", start))
-tg_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bypass_link))
+def main():
+    # Flask ကို Thread နဲ့ သီးသန့် အရင် Run ထားမယ်
+    flask_thread = Thread(target=run_flask)
+    flask_thread.daemon = True
+    flask_thread.start()
 
-def run_tg_bot():
-    asyncio.set_event_loop(loop)
-    tg_app.run_polling(close_loop=False)
-
-# Render Port scan error အောင်မြင်အောင် လုပ်ပေးမယ့်နေရာ
-@app.route("/")
-def home():
-    return "Royald Bot Is Fully Active 24/7!"
+    # Telegram Bot ကို ပုံမှန်အတိုင်း အပြည့်အဝ Run မယ်
+    tg_app = Application.builder().token(BOT_TOKEN).build()
+    tg_app.add_handler(CommandHandler("start", start))
+    tg_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bypass_link))
+    
+    print("🤖 Bot is starting via Polling...")
+    tg_app.run_polling()
 
 if __name__ == '__main__':
-    bot_thread = Thread(target=run_tg_bot)
-    bot_thread.daemon = True
-    bot_thread.start()
-    
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    main()
