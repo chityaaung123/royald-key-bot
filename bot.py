@@ -9,7 +9,7 @@ from flask import Flask
 app = Flask(__name__)
 
 # မင်းရဲ့ Telegram Bot Token အသစ်ကို ကွက်တိထည့်ထားပါတယ်
-BOT_TOKEN = "8952360592:AAG8r9HB4Glihm6h35n4lgNahoxt9GA0L0I"
+BOT_TOKEN = "8999847261:AAELT3RyDv5mw5R_LWNfGTUyT05WMTRDYts"
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
