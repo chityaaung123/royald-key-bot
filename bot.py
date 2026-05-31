@@ -2,26 +2,36 @@ import os
 import time
 import logging
 import requests
+from threading import Thread
+import asyncio
 from flask import Flask, request
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
 app = Flask(__name__)
 
-# မင်းရဲ့ Telegram Bot Token 
+# မင်းရဲ့ Telegram Bot Token
 BOT_TOKEN = "8952360592:AAG8r9HB4Glihm6h35n4lgNahoxt9GA0L0I"
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
 tg_app = Application.builder().token(BOT_TOKEN).build()
 
+# /start လို့ နှိပ်ရင် ပေါ်လာမယ့် စတိုင်ကျကျ နှုတ်ဆက်စာသား
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text(
-        "🤖 **Royald Hub Premium Bypasser မှ ကြိုဆိုပါတယ်!**\n\n"
-        "🔗 Platoboost, Delta, Hydrogen, Linkvertise စတဲ့ "
-        "ထောက်ပံ့ထားတဲ့ Link အမျိုးအစားပေါင်း ၄၂ ခုကျော်ကို အခမဲ့ ကျော်ပေးနိုင်ပါပြီဗျာ။\n\n"
-        "👉 စမ်းသပ်ဖို့ မင်းရဲ့ Key Link ကို ပို့ပေးလိုက်ပါဦး!",
-        parse_mode='Markdown'
+    welcome_text = (
+        "🤖 **Welcome to Royald Hub Premium Bypasser!**\n\n"
+        "👋 မင်္ဂလာပါဗျာ! ကျွန်တော့်ကို လာရောက်သုံးစွဲပေးလို့ ကျေးဇူးအထူးတင်ပါတယ်ခင်ဗျာ။\n\n"
+        "✨ **ထောက်ပံ့ထားသော Link များ -**\n"
+        "➡️ Platoboost (Platorelay)\n"
+        "➡️ Delta Key / Fluxus / Hydrogen\n"
+        "➡️ Linkvertise / Link4M နှင့် အခြား Link ပေါင်း ၄၀ ကျော်\n\n"
+        "⚙️ **အသုံးပြုနည်း -**\n"
+        "မင်းရဲ့ Key ယူရမယ့် Link အရှည်ကြီးကို ဒီ Chat ထဲသို့ တိုက်ရိုက် Message ပို့ပေးလိုက်ပါဦးဗျာ။"
     )
+    await update.message.reply_text(welcome_text, parse_mode='Markdown')
 
 async def bypass_link(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_link = update.message.text
@@ -30,27 +40,21 @@ async def bypass_link(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         return
 
     status_msg = await update.message.reply_text("⏳ Premium Web Server ကနေ မင်းရဲ့ Key ကို ကျော်ပေးနေပါပြီ... ခဏစောင့်ပေးပါဗျာ...")
-    
-    # စက္ကန့်တွက်ချက်ရန် စတင်ချိန်ကို မှတ်သားခြင်း
     start_time = time.time()
     
-    # ကမ္ဘာလုံးဆိုင်ရာ အားကောင်းသော Premium Bypass API 
+    # Premium Bypass API
     api_url = f"https://api.freebypasser.xyz/api/bypass?url={user_link}"
     
     try:
         response = requests.get(api_url, timeout=40)
         data = response.json()
         
-        # အချိန်ဘယ်လောက်ကြာသွားလဲ တွက်ချက်ခြင်း
         time_taken = round(time.time() - start_time, 2)
-        
-        # API Response ထဲက ဒေတာတွေကို စစ်ဆေးခြင်း
         success = data.get("success", False)
         key_result = data.get("result") or data.get("key") or data.get("bypassed")
         link_type = data.get("type", "Bypass")
 
         if success and key_result:
-            # မင်းပြထားတဲ့ ပုံစံအတိုင်း ကွက်တိ Format ပြန်ထုတ်ပေးခြင်း
             response_text = (
                 f"🌟 **Bypass Success [{link_type}]**\n"
                 f"🟢 Time taken {time_taken}s\n\n"
@@ -68,13 +72,21 @@ async def bypass_link(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 tg_app.add_handler(CommandHandler("start", start))
 tg_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bypass_link))
 
+def run_tg_bot():
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(tg_app.initialize())
+    loop.run_until_complete(tg_app.updater.start_polling())
+    loop.run_until_complete(tg_app.start())
+    loop.run_forever()
+
 @app.route("/", methods=["GET", "POST"])
-def webhook():
-    if request.method == "POST":
-        update = Update.de_json(request.get_json(force=True), tg_app.bot)
-        tg_app.update_queue.put(update)
-    return "Premium Key Bot Is Running 24/7!"
+def home():
+    return "Royald Premium Key Bot Is Running 24/7!"
 
 if __name__ == '__main__':
+    bot_thread = Thread(target=run_tg_bot)
+    bot_thread.daemon = True
+    bot_thread.start()
+    
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
