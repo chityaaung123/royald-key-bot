@@ -11,7 +11,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 app = Flask(__name__)
 
 # မင်းရဲ့ Telegram Bot Token
-BOT_TOKEN = "8152360592:AAG8n9Hb4G1ihm6h35n4lNahokt9GAOLOI"
+BOT_TOKEN = "8999847261:AAELT3RyDv5mw5R_LWNfGTUyT05WMTRDYts"
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
