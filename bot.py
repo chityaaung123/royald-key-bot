@@ -10,20 +10,16 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 
 app = Flask(__name__)
 
-# မင်းရဲ့ Telegram Bot Token အမှန်
-BOT_TOKEN = "8999847261:AAELT3RyDv5mw5R_LWNfGTUyT05WMTRDYts"
+# မင်းရဲ့ Telegram Bot Token
+BOT_TOKEN = "8999847261:AAELT3RyDv5mw5R_LwNFGtUyTO5wMTRDYts"
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-
-loop = asyncio.new_event_loop()
-asyncio.set_event_loop(loop)
-tg_app = Application.builder().token(BOT_TOKEN).build()
 
 # /start လို့ နှိပ်ရင် ပေါ်လာမယ့် စတိုင်ကျကျ နှုတ်ဆက်စာသား
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     welcome_text = (
         "🤖 **Welcome to Royald Hub Premium Bypasser!**\n\n"
-        "👋 မင်္ဂလာပါဗျာ! ကျွန်တော့်ကို Lာရောက်သုံးစွဲပေးလို့ ကျေးဇူးအထူးတင်ပါတယ်ခင်ဗျာ။\n\n"
+        "👋 မင်္ဂလာပါဗျာ! ကျွန်တော့်ကို လာရောက်သုံးစွဲပေးလို့ ကျေးဇူးအထူးတင်ပါတယ်ခင်ဗျာ။\n\n"
         "✨ **ထောက်ပံ့ထားသော Link များ -**\n"
         "➡️ Platoboost (Platorelay)\n"
         "➡️ Delta Key / Fluxus / Hydrogen\n"
@@ -69,34 +65,27 @@ async def bypass_link(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         logging.error(f"Bypass Error: {e}")
         await status_msg.edit_text("❌ API Server ဘက်က တုံ့ပြန်မှု အရမ်းကြာနေလို့ပါဗျာ။ နောက်တစ်ကြိမ် ပြန်ပို့ကြည့်ပေးပါဦး။")
 
-tg_app.add_handler(CommandHandler("start", start))
-tg_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bypass_link))
-
-def run_tg_bot():
-    asyncio.set_event_loop(loop)
-    
-    # Render ပေါ်မှာ ပျက်မကျအောင် စနစ်တကျ Initialize လုပ်ပြီး စက်နှိုးခြင်း
-    loop.run_until_complete(tg_app.initialize())
-    
-    # ရှေ့က ကျန်ခဲ့ဖူးသမျှ Webhook လမ်းကြောင်းအဟောင်းတွေကို အရင်ဖျက်ထုတ်ပစ်ခြင်း (ဒါမှ Polling စနစ်က စာပြန်မှာပါ)
-    loop.run_until_complete(tg_app.bot.delete_webhook(drop_pending_updates=True))
-    
-    # Direct Polling စနစ်ဖြင့် သန့်သန့်ရှင်းရှင်း Run ပါသည်
-    loop.run_until_complete(tg_app.updater.start_polling(drop_pending_updates=True))
-    loop.run_until_complete(tg_app.start())
-    print("🤖 Telegram Bot Is Successfully Polling...")
-    loop.run_forever()
+# Flask ကို Background Thread နဲ့ Run ပေးမယ့် Function
+def run_flask():
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
 
 @app.route("/", methods=["GET", "POST"])
 def home():
     return "Royald Premium Key Bot Is Running 24/7!"
 
 if __name__ == '__main__':
-    # Telegram Bot ကို Thread ခွဲပြီး နောက်ကွယ်မှာ မောင်းနှင်မည်
-    bot_thread = Thread(target=run_tg_bot)
-    bot_thread.daemon = True
-    bot_thread.start()
+    # 1. Flask Web Server ကို အရင်ဆုံး စက်နှိုးထားမယ်
+    flask_thread = Thread(target=run_flask)
+    flask_thread.daemon = True
+    flask_thread.start()
     
-    # Flask Server ကို ပင်မ Thread မှာ မောင်းနှင်ပြီး Render Port Scan ကို ကျော်ဖြတ်မည်
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    # 2. Telegram Bot ကို အသစ်စက်စက် တည်ဆောက်မယ်
+    tg_app = Application.builder().token(BOT_TOKEN).build()
+    
+    tg_app.add_handler(CommandHandler("start", start))
+    tg_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bypass_link))
+    
+    # 3. Python 3.14 မှာ အတည်ငြိမ်ဆုံးဖြစ်တဲ့ တိုက်ရိုက် run_polling စနစ်နဲ့ စက်နှိုးမယ် (Crash မဖြစ်တော့ပါ)
+    print("🤖 Bot is successfully running via run_polling...")
+    tg_app.run_polling(drop_pending_updates=True)
