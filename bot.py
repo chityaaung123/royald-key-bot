@@ -10,7 +10,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 
 app = Flask(__name__)
 
-# မင်းရဲ့ Telegram Bot Token အသစ်စက်စက်ကြီး
+# မင်းရဲ့ Telegram Bot Token အမှန်
 BOT_TOKEN = "8999847261:AAELT3RyDv5mw5R_LWNfGTUyT05WMTRDYts"
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -23,7 +23,7 @@ tg_app = Application.builder().token(BOT_TOKEN).build()
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     welcome_text = (
         "🤖 **Welcome to Royald Hub Premium Bypasser!**\n\n"
-        "👋 မင်္ဂလာပါဗျာ! ကျွန်တော့်ကို လာရောက်သုံးစွဲပေးလို့ ကျေးဇူးအထူးတင်ပါတယ်ခင်ဗျာ။\n\n"
+        "👋 မင်္ဂလာပါဗျာ! ကျွန်တော့်ကို Lာရောက်သုံးစွဲပေးလို့ ကျေးဇူးအထူးတင်ပါတယ်ခင်ဗျာ။\n\n"
         "✨ **ထောက်ပံ့ထားသော Link များ -**\n"
         "➡️ Platoboost (Platorelay)\n"
         "➡️ Delta Key / Fluxus / Hydrogen\n"
@@ -75,16 +75,16 @@ tg_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bypass_link))
 def run_tg_bot():
     asyncio.set_event_loop(loop)
     
-    # Python 3.14 Environment မှာ ပျက်မကျအောင် initialize အရင်လုပ်မယ်
+    # Render ပေါ်မှာ ပျက်မကျအောင် စနစ်တကျ Initialize လုပ်ပြီး စက်နှိုးခြင်း
     loop.run_until_complete(tg_app.initialize())
     
-    # ညက ကျန်ခဲ့တဲ့ Webhook အမှိုက်တွေကို အလိုအလျောက် ရှင်းထုတ်ပစ်မယ်
+    # ရှေ့က ကျန်ခဲ့ဖူးသမျှ Webhook လမ်းကြောင်းအဟောင်းတွေကို အရင်ဖျက်ထုတ်ပစ်ခြင်း (ဒါမှ Polling စနစ်က စာပြန်မှာပါ)
     loop.run_until_complete(tg_app.bot.delete_webhook(drop_pending_updates=True))
     
-    # Updater Bug ကို ကျော်ခွပြီး Direct Polling စနစ်နဲ့ စက်နှိုးပါတယ်
+    # Direct Polling စနစ်ဖြင့် သန့်သန့်ရှင်းရှင်း Run ပါသည်
     loop.run_until_complete(tg_app.updater.start_polling(drop_pending_updates=True))
     loop.run_until_complete(tg_app.start())
-    print("🤖 Bot is successfully running and polling...")
+    print("🤖 Telegram Bot Is Successfully Polling...")
     loop.run_forever()
 
 @app.route("/", methods=["GET", "POST"])
@@ -92,9 +92,11 @@ def home():
     return "Royald Premium Key Bot Is Running 24/7!"
 
 if __name__ == '__main__':
+    # Telegram Bot ကို Thread ခွဲပြီး နောက်ကွယ်မှာ မောင်းနှင်မည်
     bot_thread = Thread(target=run_tg_bot)
     bot_thread.daemon = True
     bot_thread.start()
     
+    # Flask Server ကို ပင်မ Thread မှာ မောင်းနှင်ပြီး Render Port Scan ကို ကျော်ဖြတ်မည်
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
