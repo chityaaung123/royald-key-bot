@@ -10,7 +10,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 
 app = Flask(__name__)
 
-# မင်းရဲ့ Telegram Bot Token
+# မင်းရဲ့ Telegram Bot Token အသစ်စက်စက်ကြီး
 BOT_TOKEN = "8999847261:AAELT3RyDv5mw5R_LWNfGTUyT05WMTRDYts"
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -74,9 +74,17 @@ tg_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bypass_link))
 
 def run_tg_bot():
     asyncio.set_event_loop(loop)
+    
+    # Python 3.14 Environment မှာ ပျက်မကျအောင် initialize အရင်လုပ်မယ်
     loop.run_until_complete(tg_app.initialize())
-    loop.run_until_complete(tg_app.updater.start_polling())
+    
+    # ညက ကျန်ခဲ့တဲ့ Webhook အမှိုက်တွေကို အလိုအလျောက် ရှင်းထုတ်ပစ်မယ်
+    loop.run_until_complete(tg_app.bot.delete_webhook(drop_pending_updates=True))
+    
+    # Updater Bug ကို ကျော်ခွပြီး Direct Polling စနစ်နဲ့ စက်နှိုးပါတယ်
+    loop.run_until_complete(tg_app.updater.start_polling(drop_pending_updates=True))
     loop.run_until_complete(tg_app.start())
+    print("🤖 Bot is successfully running and polling...")
     loop.run_forever()
 
 @app.route("/", methods=["GET", "POST"])
