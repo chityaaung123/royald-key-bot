@@ -10,8 +10,8 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 
 app = Flask(__name__)
 
-# မင်းရဲ့ Telegram Bot Token အသစ်
-BOT_TOKEN = "8999847261:AAELT3RyDv5mw5R_LWNfGTUyT05WMTRDYts"
+# မင်းရဲ့ Telegram Bot Token
+BOT_TOKEN = "8152360592:AAG8n9Hb4G1ihm6h35n4lNahokt9GAOLOI"
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -74,10 +74,6 @@ tg_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bypass_link))
 
 def run_tg_bot():
     asyncio.set_event_loop(loop)
-    
-    # 🔥 စာပြန်မလာစေတဲ့ Webhook အဟောင်းပိတ်ဆို့မှုကို ဖြုတ်ချပေးမယ့် အပိုင်း
-    loop.run_until_complete(tg_app.bot.delete_webhook(drop_pending_updates=True))
-    
     loop.run_until_complete(tg_app.initialize())
     loop.run_until_complete(tg_app.updater.start_polling())
     loop.run_until_complete(tg_app.start())
