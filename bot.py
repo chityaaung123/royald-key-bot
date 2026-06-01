@@ -6,7 +6,7 @@ from threading import Thread
 from flask import Flask
 import telebot
 
-# Flask Web Server အပိုင်း (Render Port Scan အောင်မြင်ဖို့)
+# Flask Web Server အပိုင်း
 app = Flask(__name__)
 
 @app.route("/")
@@ -17,7 +17,7 @@ def run_flask():
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
 
-# Telegram Bot အပိုင်း (Telebot စနစ်သစ်)
+# Telegram Bot အပိုင်း (မင်းရဲ့ Bot Token အသစ်)
 BOT_TOKEN = "8999847261:AAELT3RyDv5mw5R_LWNfGTUyT05WMTRDYts"
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="MARKDOWN")
 
@@ -38,7 +38,7 @@ def send_welcome(message):
     )
     bot.reply_to(message, welcome_text)
 
-# Link ကျော်ပေးမယ့် Function အစစ်
+# Link ကျော်ပေးမယ့် Function
 @bot.message_handler(func=lambda message: True)
 def bypass_link(message):
     user_link = message.text
@@ -49,7 +49,6 @@ def bypass_link(message):
     status_msg = bot.reply_to(message, "⏳ Premium Web Server ကနေ မင်းရဲ့ Key ကို ကျော်ပေးနေပါပြီ... ခဏစောင့်ပေးပါဗျာ...")
     start_time = time.time()
     
-    # စမ်းသပ်မည့် API လိပ်စာ ပုံစံ ၃ ခု (အရန်စနစ် ပါဝင်သည်)
     apis = [
         f"https://api.freebypasser.xyz/api/bypass?url={user_link}",
         f"https://dl.freebypasser.xyz/api/bypass?url={user_link}",
@@ -92,11 +91,16 @@ def bypass_link(message):
         )
 
 if __name__ == '__main__':
-    # Flask ကို Thread နဲ့ သီးသန့် အရင် Run မယ်
+    # 1. Flask ကို Background Thread နဲ့ Run ထားမယ်
     flask_thread = Thread(target=run_flask)
     flask_thread.daemon = True
     flask_thread.start()
     
-    # Telebot ကို Polling စနစ်နဲ့ စိတ်ချရဆုံး ပွင့်စေမယ်
+    # 2. 🔥 Webhook အဟောင်းတွေကို လုံးဝ အပြတ်ရှင်းထုတ်ပစ်မယ့် အပိုင်း (ဒါကြောင့် စာပြန်လာမှာပါ)
+    print("🧹 Removing old webhooks...")
+    bot.remove_webhook()
+    time.sleep(1)
+    
+    # 3. Telebot ကို အသစ်စက်စက် Polling စမောင်းမယ်
     print("🤖 Telebot is starting via Polling...")
     bot.infinity_polling(skip_pending_updates=True)
